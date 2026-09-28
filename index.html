@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ERBLIN'S SNOWBALL SHOWDOWN</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050811;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            max-width: 100vw;
+            max-height: 100vh;
+            border: 6px solid #3b4c74;
+            box-shadow: 0 0 45px rgba(0, 240, 255, 0.25), 0 0 15px rgba(0, 0, 0, 0.9);
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            touch-action: manipulation;
+        }
+
+        /* Overlay UI */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 12px;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            text-shadow: 2px 2px #000;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .hud-card {
+            background: #111625;
+            padding: 6px 10px;
+            border: 3px solid #3a4b6e;
+            box-shadow: 0 4px #000;
+        }
+
+        .hud-card.brand {
+            background: #b82335;
+            border-color: #fca0a0;
+            color: #fff;
+            animation: brandPulse 2s infinite alternate;
+        }
+
+        @keyframes brandPulse {
+            0% { border-color: #fca0a0; box-shadow: 0 0 8px #fca0a0; }
+            100% { border-color: #ffe63b; box-shadow: 0 0 12px #ffe63b; }
+        }
+
+        /* Screens & Menus */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(6, 10, 20, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            gap: 12px;
+            text-align: center;
+            padding: 16px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Homepage Redesign Styling */
+        .title-box {
+            background: linear-gradient(180deg, #152238 0%, #0d1526 100%);
+            border: 4px solid #73eff7;
+            padding: 16px 22px;
+            box-shadow: 0 8px 0 #000, 0 0 20px rgba(115, 239, 247, 0.3);
+            margin-bottom: 4px;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 0;
+            color: #73eff7;
+            text-shadow: 3px 3px #000, 0 0 10px rgba(115, 239, 247, 0.6);
+            letter-spacing: 1px;
+            line-height: 1.35;
+        }
+
+        .sub-banner {
+            font-size: 9px;
+            color: #ffe63b;
+            background: #281a03;
+            border: 2px solid #ffe63b;
+            padding: 5px 12px;
+            text-shadow: 2px 2px #000;
+            box-shadow: 0 4px #000;
+        }
+
+        .menu-card {
+            background: rgba(17, 25, 43, 0.85);
+            border: 3px solid #2d3f66;
+            padding: 10px 16px;
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pixel-btn {
+            position: relative;
+            padding: 10px 20px;
+            font-size: 10px;
+            color: #fff;
+            background-color: #3b52d4;
+            border: 4px solid #7a93f5;
+            box-shadow: inset -4px -4px 0px #1a287b, 0 6px #000;
+            cursor: pointer;
+            text-transform: uppercase;
+            width: 220px;
+        }
+
+        .pixel-btn:hover {
+            background-color: #4f67ee;
+            transform: translateY(-2px);
+        }
+
+        .pixel-btn:active {
+            box-shadow: inset 4px 4px 0px #1a287b, 0 0 #000;
+            transform: translateY(4px);
+        }
+
+        .pixel-btn.gold {
+            background-color: #d48f11;
+            border-color: #f7ca59;
+            box-shadow: inset -4px -4px 0px #704702, 0 6px #000;
+        }
+
+        .pixel-btn.gold:hover {
+            background-color: #e59d18;
+        }
+
+        .pixel-btn.secondary {
+            background-color: #4a5568;
+            border-color: #a0aec0;
+            box-shadow: inset -4px -4px 0px #1a202c, 0 6px #000;
+        }
+
+        /* Map Selector */
+        .map-select-row {
+            display: flex;
+            gap: 8px;
+            margin: 2px 0;
+        }
+
+        .map-btn {
+            padding: 6px 10px;
+            font-size: 8px;
+            background: #1a233a;
+            border: 2px solid #3a4b6e;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        .map-btn.selected {
+            border-color: #73eff7;
+            color: #fff;
+            background: #2b3d68;
+            box-shadow: 0 0 8px rgba(115, 239, 247, 0.4);
+        }
+
+        /* Shop Grid */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            max-height: 250px;
+            width: 100%;
+            max-width: 620px;
+            overflow-y: auto;
+            padding: 8px;
+            background: #090c12;
+            border: 4px solid #232d42;
+        }
+
+        .shop-card {
+            background: #151c2c;
+            border: 3px solid #344463;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-size: 8px;
+            gap: 4px;
+            height: 95px;
+        }
+
+        .shop-card.equipped {
+            border-color: #38e07b;
+            background: #113320;
+        }
+
+        .shop-card.owned {
+            border-color: #38b6ff;
+        }
+
+        .ball-pixel-preview {
+            width: 24px;
+            height: 24px;
+            image-rendering: pixelated;
+        }
+
+        /* Mobile Controls */
+        .controls-bar {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 12px;
+            pointer-events: auto;
+        }
+
+        .btn-dodge {
+            width: 85px;
+            height: 52px;
+            background: #25334e;
+            border: 3px solid #5d74a1;
+            box-shadow: inset -3px -3px 0 #121a29, 0 4px #000;
+            font-size: 12px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .btn-dodge:active {
+            transform: translateY(4px);
+            box-shadow: inset 3px 3px 0 #121a29, 0 0 #000;
+        }
+
+        @media (max-width: 600px) {
+            .shop-grid { grid-template-columns: repeat(2, 1fr); }
+            h1 { font-size: 14px; }
+            .hud { font-size: 8px; }
+            .pixel-btn { width: 180px; font-size: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <canvas id="canvas" width="320" height="240"></canvas>
+
+        <div class="ui-layer">
+            <div class="hud">
+                <div class="hud-card brand">BY ERBLIN</div>
+                <div class="hud-card" id="hud-score">SCORE: 0</div>
+                <div class="hud-card" id="hud-combo">COMBO: x1</div>
+                <div class="hud-card" id="hud-coins">COINS: 0</div>
+                <div class="hud-card" id="hud-lives">LIVES: ❤️❤️❤️</div>
+            </div>
+
+            <div class="controls-bar">
+                <button class="btn-dodge" id="btn-dodge-left">◀ DODGE</button>
+                <button class="btn-dodge" id="btn-dodge-right">DODGE ▶</button>
+            </div>
+        </div>
+
+        <!-- Title Screen -->
+        <div id="screen-title" class="screen">
+            <div class="title-box">
+                <h1>ERBLIN'S<br>SNOWBALL SHOWDOWN</h1>
+            </div>
+            <div class="sub-banner">CREATED BY ERBLIN</div>
+
+            <div class="menu-card">
+                <div style="font-size: 8px; color: #a0aec0;">SELECT ARENA:</div>
+                <div class="map-select-row">
+                    <button class="map-btn selected" id="map-btn-village" onclick="selectMap('VILLAGE')">VILLAGE</button>
+                    <button class="map-btn" id="map-btn-forest" onclick="selectMap('FOREST')">FOREST</button>
+                    <button class="map-btn" id="map-btn-glacier" onclick="selectMap('GLACIER')">GLACIER</button>
+                </div>
+            </div>
+
+            <button class="pixel-btn" onclick="startGame()">START GAME</button>
+            <button class="pixel-btn gold" onclick="openShop()">SNOWBALL SHOP</button>
+
+            <p style="font-size: 7px; color: #73eff7; line-height: 1.6; max-width: 320px; margin-top: 4px;">
+                CONTROLS: [A]/[D] or ◀ / ▶ to Dodge<br>
+                LEFT SHOT? DODGE LEFT! RIGHT SHOT? DODGE RIGHT!
+            </p>
+        </div>
+
+        <!-- Shop Screen -->
+        <div id="screen-shop" class="screen hidden">
+            <h1>SNOWBALL SHOP</h1>
+            <div class="sub-banner">CURATED BY ERBLIN</div>
+            <div id="shop-coins-display" style="font-size: 9px; color: #fce138;">COINS: 0</div>
+            <div class="shop-grid" id="shop-grid"></div>
+            <button class="pixel-btn secondary" onclick="closeShop()">BACK</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="screen-gameover" class="screen hidden">
+            <h1>GAME OVER</h1>
+            <div class="sub-banner">PLAYED ON ERBLIN'S ARENA</div>
+            <p id="final-score" style="font-size: 9px; color: #73eff7; margin: 4px 0;">SCORE: 0</p>
+            <p id="coins-earned" style="font-size: 9px; color: #fce138; margin: 4px 0;">COINS EARNED: 0</p>
+            <button class="pixel-btn" onclick="startGame()">TRY AGAIN</button>
+            <button class="pixel-btn secondary" onclick="openTitleScreen()">MAIN MENU</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        const GW = 320;
+        const GH = 240;
+
+        // Retro Web Audio Sound Generator
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'throw') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(120, now + 0.1);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'hit') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            } else if (type === 'gold_hit') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523, now);
+                osc.frequency.setValueAtTime(659, now + 0.08);
+                osc.frequency.setValueAtTime(783, now + 0.16);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'damage') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(50, now + 0.25);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'dodge') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(350, now + 0.08);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            }
+        }
+
+        let saveData = {
+            coins: 0,
+            ownedBalls: [0],
+            equippedBall: 0,
+            selectedMap: 'VILLAGE'
+        };
+
+        function loadGame() {
+            const loaded = localStorage.getItem('erblin_snowball_pro_save');
+            if (loaded) {
+                try { saveData = Object.assign(saveData, JSON.parse(loaded)); } catch(e) {}
+            }
+        }
+
+        function saveGame() {
+            localStorage.setItem('erblin_snowball_pro_save', JSON.stringify(saveData));
+        }
+
+        const SNOWBALL_TYPES = [
+            { id: 0, name: "Classic", cost: 0, color: "#ffffff", border: "#a0aab8" },
+            { id: 1, name: "Ice Blue", cost: 50, color: "#73eff7", border: "#2b89d9" },
+            { id: 2, name: "Coal", cost: 100, color: "#3a3a42", border: "#18181c" },
+            { id: 3, name: "Red Apple", cost: 150, color: "#f03838", border: "#8c1111" },
+            { id: 4, name: "Lime Green", cost: 200, color: "#38e038", border: "#157015" },
+            { id: 5, name: "Gold Sparkle", cost: 300, color: "#fce138", border: "#b88a09" },
+            { id: 6, name: "Bubblegum", cost: 350, color: "#ff82cb", border: "#b83082" },
+            { id: 7, name: "Purple Dusk", cost: 400, color: "#a259ff", border: "#5318a8" },
+            { id: 8, name: "Neon Cyan", cost: 500, color: "#00f0ff", border: "#0070a8" },
+            { id: 9, name: "Hot Pink", cost: 600, color: "#ff1493", border: "#8a004c" },
+            { id: 10, name: "Mudball", cost: 650, color: "#8b5a2b", border: "#42280e" },
+            { id: 11, name: "Glacier", cost: 750, color: "#d0f4de", border: "#6a9998" },
+            { id: 12, name: "Toxic Slime", cost: 850, color: "#76ff03", border: "#338a00" },
+            { id: 13, name: "Magma Orb", cost: 1000, color: "#ff5722", border: "#8f1900" },
+            { id: 14, name: "Shadow", cost: 1200, color: "#212121", border: "#000000" },
+            { id: 15, name: "Star Yellow", cost: 1400, color: "#ffeb3b", border: "#f57f17" },
+            { id: 16, name: "Cotton Candy", cost: 1600, color: "#f8bbd0", border: "#a5d6a7" },
+            { id: 17, name: "Emerald", cost: 1800, color: "#00bfa5", border: "#00564d" },
+            { id: 18, name: "Amethyst", cost: 2000, color: "#aa00ff", border: "#4a0072" },
+            { id: 19, name: "Erblin Cosmic", cost: 2500, color: "#ffffff", border: "#ff007f" }
+        ];
+
+        // Core Game Variables
+        let state = 'TITLE';
+        let score = 0;
+        let streak = 0;
+        let lives = 3;
+        let coinsGained = 0;
+        let dodgeDir = 0; // -1 Left, 0 Center, 1 Right
+        let isDodgingLeft = false;
+        let isDodgingRight = false;
+        let playerThrowTimer = 0;
+
+        let targets = [];
+        let particles = [];
+        let floatTexts = [];
+        let projectiles = [];
+        let playerSnowballs = [];
+        let screenShake = 0;
+
+        const HOLES = [
+            {x: 60, y: 125},
+            {x: 160, y: 115},
+            {x: 260, y: 125},
+            {x: 100, y: 160},
+            {x: 220, y: 160}
+        ];
+
+        const SNOWMAN_TYPES = ['CLASSIC', 'TOPHAT', 'EARMUFFS', 'BEANIE', 'GOLDEN'];
+
+        function drawPixelRect(x, y, w, h, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+        }
+
+        class PixelTarget {
+            constructor(hole) {
+                this.x = hole.x;
+                this.y = hole.y;
+                this.type = Math.random() < 0.05 ? 'GOLDEN' : SNOWMAN_TYPES[Math.floor(Math.random() * 4)];
+                this.state = 'RISING';
+                this.progress = 0;
+                this.maxUpTime = Math.max(140 - Math.floor(score / 40), 70);
+                this.timer = 0;
+                this.hasAttacked = false;
+                this.chargeTimer = 0;
+                this.isCharging = false;
+                this.armAngle = 0;
+            }
+
+            update() {
+                if (this.state === 'RISING') {
+                    this.progress += 0.12;
+                    if (this.progress >= 1) {
+                        this.progress = 1;
+                        this.state = 'IDLE';
+                    }
+                } else if (this.state === 'IDLE') {
+                    this.timer++;
+                    
+                    if (this.timer > this.maxUpTime - 45 && !this.hasAttacked) {
+                        this.isCharging = true;
+                        this.chargeTimer++;
+                        this.armAngle = Math.sin(this.chargeTimer * 0.4) * 0.5;
+                    }
+
+                    if (this.timer >= this.maxUpTime - 5 && !this.hasAttacked) {
+                        this.attackPlayer();
+                        this.hasAttacked = true;
+                        this.isCharging = false;
+                    }
+
+                    if (this.timer >= this.maxUpTime) {
+                        this.state = 'HIDING';
+                    }
+                } else if (this.state === 'HIDING') {
+                    this.progress -= 0.12;
+                    if (this.progress <= 0) {
+                        this.progress = 0;
+                        this.state = 'HIDDEN';
+                    }
+                }
+            }
+
+            attackPlayer() {
+                const attackDir = this.x < 160 ? -1 : 1;
+                projectiles.push({
+                    x: this.x,
+                    y: this.y - 12,
+                    targetX: 160 + (attackDir * 75),
+                    targetY: 210,
+                    progress: 0,
+                    speed: 0.018, 
+                    attackDir: attackDir,
+                    hasCheckedDamage: false
+                });
+            }
+
+            draw() {
+                if (this.state === 'HIDDEN') return;
+
+                const curY = this.y - Math.round(26 * this.progress);
+                const isGold = this.type === 'GOLDEN';
+
+                const mainCol = isGold ? '#fce138' : '#ffffff';
+                const shadowCol = isGold ? '#b88a09' : '#a0aab8';
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(this.x - 24, this.y - 36, 48, 36);
+                ctx.clip();
+
+                // Bottom Ball
+                drawPixelRect(this.x - 11, curY + 12, 22, 12, mainCol);
+                drawPixelRect(this.x - 9, curY + 22, 18, 2, shadowCol);
+
+                // Head Ball
+                drawPixelRect(this.x - 7, curY - 1, 14, 13, mainCol);
+                drawPixelRect(this.x - 5, curY + 10, 10, 2, shadowCol);
+
+                // Eyes & Carrot Nose
+                drawPixelRect(this.x - 4, curY + 3, 2, 2, '#000000');
+                drawPixelRect(this.x + 2, curY + 3, 2, 2, '#000000');
+                drawPixelRect(this.x - 1, curY + 6, 4, 2, '#ff6600');
+
+                // Stick Arms with Charging Animation
+                ctx.strokeStyle = '#5a3d28';
+                ctx.lineWidth = 2;
+
+                // Left Arm
+                ctx.beginPath();
+                ctx.moveTo(this.x - 7, curY + 14);
+                if (this.isCharging) {
+                    ctx.lineTo(this.x - 16, curY + 6 + Math.sin(this.chargeTimer * 0.3) * 3);
+                } else {
+                    ctx.lineTo(this.x - 15, curY + 12);
+                }
+                ctx.stroke();
+
+                // Right Arm (holds snowball when charging)
+                ctx.beginPath();
+                ctx.moveTo(this.x + 7, curY + 14);
+                if (this.isCharging) {
+                    const armX = this.x + 16;
+                    const armY = curY + 4 + Math.cos(this.chargeTimer * 0.3) * 3;
+                    ctx.lineTo(armX, armY);
+                    ctx.stroke();
+                    drawPixelRect(armX - 3, armY - 3, 6, 6, '#ffffff');
+                    drawPixelRect(armX - 2, armY - 2, 4, 4, '#a0aab8');
+                } else {
+                    ctx.lineTo(this.x + 15, curY + 12);
+                    ctx.stroke();
+                }
+
+                // Accessories
+                if (this.type === 'TOPHAT') {
+                    drawPixelRect(this.x - 9, curY - 3, 18, 2, '#18181c');
+                    drawPixelRect(this.x - 5, curY - 10, 10, 7, '#18181c');
+                    drawPixelRect(this.x - 5, curY - 5, 10, 2, '#f03838');
+                } else if (this.type === 'EARMUFFS') {
+                    drawPixelRect(this.x - 9, curY + 3, 3, 5, '#f03838');
+                    drawPixelRect(this.x + 6, curY + 3, 3, 5, '#f03838');
+                    drawPixelRect(this.x - 7, curY - 3, 14, 2, '#f03838');
+                } else if (this.type === 'BEANIE') {
+                    drawPixelRect(this.x - 7, curY - 5, 14, 4, '#2b89d9');
+                    drawPixelRect(this.x - 8, curY - 1, 16, 2, '#ffffff');
+                    drawPixelRect(this.x - 2, curY - 8, 4, 3, '#ffffff');
+                }
+
+                ctx.restore();
+            }
+        }
+
+        function createSplatParticles(x, y, color) {
+            for (let i = 0; i < 12; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5,
+                    life: 16,
+                    color: color
+                });
+            }
+        }
+
+        function addFloatingText(x, y, text, color) {
+            floatTexts.push({
+                x: x,
+                y: y,
+                text: text,
+                color: color,
+                life: 25,
+                vy: -1
+            });
+        }
+
+        function startGame() {
+            initAudio();
+            loadGame();
+            score = 0;
+            streak = 0;
+            lives = 3;
+            coinsGained = 0;
+            targets = [];
+            particles = [];
+            projectiles = [];
+            playerSnowballs = [];
+            floatTexts = [];
+            state = 'PLAYING';
+            hideScreens();
+            updateHUD();
+        }
+
+        function hideScreens() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        }
+
+        function openTitleScreen() {
+            state = 'TITLE';
+            hideScreens();
+            document.getElementById('screen-title').classList.remove('hidden');
+        }
+
+        function openShop() {
+            initAudio();
+            loadGame();
+            state = 'SHOP';
+            hideScreens();
+            document.getElementById('screen-shop').classList.remove('hidden');
+            renderShop();
+        }
+
+        function closeShop() {
+            openTitleScreen();
+        }
+
+        function selectMap(mapName) {
+            saveData.selectedMap = mapName;
+            saveGame();
+            document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById(`map-btn-${mapName.toLowerCase()}`).classList.add('selected');
+        }
+
+        function renderShop() {
+            document.getElementById('shop-coins-display').innerText = `COINS: ${saveData.coins}`;
+            const grid = document.getElementById('shop-grid');
+            grid.innerHTML = '';
+
+            SNOWBALL_TYPES.forEach(ball => {
+                const isOwned = saveData.ownedBalls.includes(ball.id);
+                const isEquipped = saveData.equippedBall === ball.id;
+
+                const card = document.createElement('div');
+                card.className = `shop-card ${isOwned ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`;
+
+                const preview = document.createElement('div');
+                preview.className = 'ball-pixel-preview';
+                preview.style.background = ball.color;
+                preview.style.border = `3px solid ${ball.border}`;
+                preview.style.boxShadow = 'inset -2px -2px 0px rgba(0,0,0,0.4)';
+
+                card.appendChild(preview);
+
+                const name = document.createElement('span');
+                name.innerText = ball.name;
+                card.appendChild(name);
+
+                const label = document.createElement('span');
+                if (isEquipped) label.innerText = "EQUIPPED";
+                else if (isOwned) label.innerText = "OWNED";
+                else label.innerText = `${ball.cost} C`;
+                card.appendChild(label);
+
+                card.onclick = () => handleShopClick(ball);
+                grid.appendChild(card);
+            });
+        }
+
+        function handleShopClick(ball) {
+            const isOwned = saveData.ownedBalls.includes(ball.id);
+
+            if (isOwned) {
+                saveData.equippedBall = ball.id;
+                saveGame();
+                renderShop();
+            } else if (saveData.coins >= ball.cost) {
+                saveData.coins -= ball.cost;
+                saveData.ownedBalls.push(ball.id);
+                saveData.equippedBall = ball.id;
+                saveGame();
+                renderShop();
+            }
+        }
+
+        function takeDamage() {
+            lives--;
+            streak = 0;
+            screenShake = 12;
+            playSound('damage');
+            updateHUD();
+
+            if (lives <= 0) {
+                gameOver();
+            }
+        }
+
+        function gameOver() {
+            state = 'GAMEOVER';
+            saveData.coins += coinsGained;
+            saveGame();
+
+            document.getElementById('final-score').innerText = `SCORE: ${score}`;
+            document.getElementById('coins-earned').innerText = `COINS EARNED: ${coinsGained}`;
+            hideScreens();
+            document.getElementById('screen-gameover').classList.remove('hidden');
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-score').innerText = `SCORE: ${score}`;
+            document.getElementById('hud-combo').innerText = `COMBO: x${Math.min(streak + 1, 5)}`;
+            document.getElementById('hud-coins').innerText = `COINS: ${saveData.coins + coinsGained}`;
+            document.getElementById('hud-lives').innerText = `LIVES: ${'❤️'.repeat(Math.max(0, lives))}`;
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') isDodgingLeft = true;
+            if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') isDodgingRight = true;
+            updateDodge();
+        });
+
+        window.addEventListener('keyup', e => {
+            if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') isDodgingLeft = false;
+            if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') isDodgingRight = false;
+            updateDodge();
+        });
+
+        const btnLeft = document.getElementById('btn-dodge-left');
+        const btnRight = document.getElementById('btn-dodge-right');
+
+        function updateDodge() {
+            const prev = dodgeDir;
+            if (isDodgingLeft && !isDodgingRight) dodgeDir = -1;
+            else if (isDodgingRight && !isDodgingLeft) dodgeDir = 1;
+            else dodgeDir = 0;
+
+            if (dodgeDir !== prev && dodgeDir !== 0) {
+                playSound('dodge');
+            }
+        }
+
+        btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); isDodgingLeft = true; updateDodge(); });
+        btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); isDodgingLeft = false; updateDodge(); });
+        btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); isDodgingRight = true; updateDodge(); });
+        btnRight.addEventListener('touchend', (e) => { e.preventDefault(); isDodgingRight = false; updateDodge(); });
+
+        btnLeft.addEventListener('mousedown', () => { isDodgingLeft = true; updateDodge(); });
+        btnLeft.addEventListener('mouseup', () => { isDodgingLeft = false; updateDodge(); });
+        btnRight.addEventListener('mousedown', () => { isDodgingRight = true; updateDodge(); });
+        btnRight.addEventListener('mouseup', () => { isDodgingRight = false; updateDodge(); });
+
+        // Player Throw Action
+        canvas.addEventListener('pointerdown', e => {
+            if (state !== 'PLAYING') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const clickX = (e.clientX - rect.left) * (GW / rect.width);
+            const clickY = (e.clientY - rect.top) * (GH / rect.height);
+
+            playerThrowTimer = 10;
+            playSound('throw');
+
+            const ballCosmetic = SNOWBALL_TYPES[saveData.equippedBall];
+
+            // Spawn Player Snowball Flying Animation
+            playerSnowballs.push({
+                startX: 160,
+                startY: 190,
+                targetX: clickX,
+                targetY: clickY,
+                progress: 0,
+                color: ballCosmetic.color,
+                border: ballCosmetic.border
+            });
+
+            let hit = false;
+            targets.forEach(target => {
+                if (target.state !== 'HIDDEN') {
+                    const dist = Math.hypot(target.x - clickX, (target.y - 10) - clickY);
+                    if (dist < 18) {
+                        hit = true;
+                        target.state = 'HIDING';
+
+                        streak++;
+                        const isGold = target.type === 'GOLDEN';
+                        const points = isGold ? 500 : 100 * Math.min(streak, 5);
+                        const coins = isGold ? 25 : 3;
+
+                        score += points;
+                        coinsGained += coins;
+
+                        setTimeout(() => {
+                            if (isGold) playSound('gold_hit');
+                            else playSound('hit');
+
+                            createSplatParticles(target.x, target.y - 10, ballCosmetic.color);
+                            addFloatingText(target.x, target.y - 15, `+${points}`, isGold ? '#fce138' : '#73eff7');
+                        }, 120);
+                    }
+                }
+            });
+
+            if (!hit) {
+                streak = 0;
+            }
+            updateHUD();
+        });
+
+        function loop() {
+            ctx.clearRect(0, 0, GW, GH);
+
+            ctx.save();
+            if (screenShake > 0) {
+                ctx.translate((Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5);
+                screenShake--;
+            }
+
+            if (state === 'PLAYING') {
+                drawBackgroundMap();
+
+                // Target Spawner
+                if (targets.length < 3 && Math.random() < 0.03) {
+                    const randomHole = HOLES[Math.floor(Math.random() * HOLES.length)];
+                    if (!targets.some(t => t.x === randomHole.x && t.y === randomHole.y && t.state !== 'HIDDEN')) {
+                        targets.push(new PixelTarget(randomHole));
+                    }
+                }
+
+                // Update & Render Targets
+                targets.forEach(t => t.update());
+                targets.forEach(t => t.draw());
+                targets = targets.filter(t => t.state !== 'HIDDEN');
+
+                // Render Outgoing Player Snowballs
+                for (let i = playerSnowballs.length - 1; i >= 0; i--) {
+                    let ps = playerSnowballs[i];
+                    ps.progress += 0.15;
+                    const curX = ps.startX + (ps.targetX - ps.startX) * ps.progress;
+                    const curY = ps.startY + (ps.targetY - ps.startY) * ps.progress;
+                    const sz = Math.max(2, Math.round(8 * (1 - ps.progress * 0.5)));
+
+                    drawPixelRect(curX - sz/2, curY - sz/2, sz, sz, ps.color);
+                    drawPixelRect(curX - sz/2 + 1, curY - sz/2 + 1, Math.max(1, sz - 2), Math.max(1, sz - 2), ps.border);
+
+                    if (ps.progress >= 1) playerSnowballs.splice(i, 1);
+                }
+
+                // Render Incoming Enemy Projectiles (Reversed Dodge Check)
+                for (let i = projectiles.length - 1; i >= 0; i--) {
+                    let p = projectiles[i];
+                    p.progress += p.speed;
+                    const curX = p.x + (p.targetX - p.x) * p.progress;
+                    const curY = p.y + (p.targetY - p.y) * p.progress;
+                    const sz = Math.round(3 + p.progress * 10);
+
+                    drawPixelRect(curX - sz/2, curY - sz/2, sz, sz, '#ffffff');
+                    drawPixelRect(curX - sz/2 + 1, curY - sz/2 + 1, sz - 2, sz - 2, '#a0aab8');
+
+                    // Check impact collision near the end of arc
+                    if (p.progress >= 0.88 && !p.hasCheckedDamage) {
+                        p.hasCheckedDamage = true;
+                        
+                        // REVERSED DODGE LOGIC:
+                        // Left-side shot (attackDir === -1) requires dodgeDir === -1 (Left)
+                        // Right-side shot (attackDir === 1) requires dodgeDir === 1 (Right)
+                        const safe = (p.attackDir === -1 && dodgeDir === -1) || (p.attackDir === 1 && dodgeDir === 1);
+
+                        if (!safe) {
+                            takeDamage();
+                        } else {
+                            addFloatingText(curX, curY - 10, "DODGED!", "#73eff7");
+                        }
+                    }
+
+                    if (p.progress >= 1) projectiles.splice(i, 1);
+                }
+
+                // Render Particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    let p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life--;
+
+                    drawPixelRect(p.x, p.y, 2, 2, p.color);
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+
+                // Floating Score Text
+                for (let i = floatTexts.length - 1; i >= 0; i--) {
+                    let ft = floatTexts[i];
+                    ft.y += ft.vy;
+                    ft.life--;
+
+                    ctx.fillStyle = ft.color;
+                    ctx.font = '7px "Press Start 2P"';
+                    ctx.fillText(ft.text, ft.x - 10, ft.y);
+
+                    if (ft.life <= 0) floatTexts.splice(i, 1);
+                }
+
+                // Render Main Character Erblin
+                drawMainCharacterErblin();
+            }
+
+            ctx.restore();
+            requestAnimationFrame(loop);
+        }
+
+        function drawBackgroundMap() {
+            const map = saveData.selectedMap || 'VILLAGE';
+
+            if (map === 'FOREST') {
+                drawPixelRect(0, 0, GW, 100, '#0c1a1a');
+                drawPixelRect(20, 20, 2, 2, '#ffffff');
+                drawPixelRect(180, 30, 2, 2, '#ffffff');
+
+                // Mountain range
+                drawPixelRect(0, 50, 100, 50, '#13282a');
+                drawPixelRect(80, 40, 120, 60, '#0f2022');
+                drawPixelRect(180, 55, 140, 45, '#13282a');
+
+                // Ground
+                drawPixelRect(0, 100, GW, 140, '#d8ecee');
+
+                // Dense Trees
+                drawPixelTree(20, 70);
+                drawPixelTree(60, 65);
+                drawPixelTree(250, 68);
+                drawPixelTree(290, 72);
+
+            } else if (map === 'GLACIER') {
+                drawPixelRect(0, 0, GW, 100, '#0a1128');
+                // Aurora effect
+                drawPixelRect(0, 15, GW, 20, '#1c4d4f');
+                drawPixelRect(40, 10, 120, 25, '#267368');
+
+                // Ice Peaks
+                drawPixelRect(0, 45, 90, 55, '#1d3557');
+                drawPixelRect(70, 35, 110, 65, '#152945');
+                drawPixelRect(160, 50, 160, 50, '#1d3557');
+
+                // Ground
+                drawPixelRect(0, 100, GW, 140, '#b9e3f0');
+
+                // Ice Crystals
+                drawPixelRect(30, 80, 6, 15, '#73eff7');
+                drawPixelRect(280, 82, 8, 16, '#73eff7');
+
+            } else { // VILLAGE
+                drawPixelRect(0, 0, GW, 100, '#101c38');
+                drawPixelRect(40, 15, 2, 2, '#ffffff');
+                drawPixelRect(140, 25, 2, 2, '#ffffff');
+                drawPixelRect(240, 12, 2, 2, '#ffffff');
+
+                // Village Houses background
+                drawPixelHouse(30, 60);
+                drawPixelHouse(230, 60);
+
+                // Ground
+                drawPixelRect(0, 100, GW, 140, '#cce8f5');
+            }
+
+            // Snow Holes
+            HOLES.forEach(h => {
+                drawPixelRect(h.x - 18, h.y - 2, 36, 10, '#2d3b5e');
+                drawPixelRect(h.x - 22, h.y + 4, 44, 8, '#ffffff');
+                drawPixelRect(h.x - 22, h.y + 10, 44, 2, '#a0aab8');
+            });
+        }
+
+        function drawPixelTree(x, y) {
+            drawPixelRect(x - 2, y + 16, 4, 10, '#2b1b0e');
+            drawPixelRect(x - 10, y + 10, 20, 8, '#1b4d3e');
+            drawPixelRect(x - 8, y + 4, 16, 6, '#286955');
+            drawPixelRect(x - 5, y - 2, 10, 6, '#39876e');
+            drawPixelRect(x - 3, y - 2, 6, 2, '#ffffff');
+        }
+
+        function drawPixelHouse(x, y) {
+            drawPixelRect(x, y + 10, 35, 25, '#4a3222'); // Walls
+            drawPixelRect(x - 4, y, 43, 12, '#b82335'); // Roof
+            drawPixelRect(x - 2, y - 2, 39, 4, '#ffffff'); // Snow roof
+            drawPixelRect(x + 12, y + 18, 10, 17, '#24170e'); // Door
+            drawPixelRect(x + 5, y + 15, 6, 6, '#fce138'); // Window glow
+        }
+
+        function drawMainCharacterErblin() {
+            ctx.save();
+
+            let playerX = 160;
+            let playerY = 195;
+
+            if (dodgeDir === -1) {
+                ctx.translate(-38, 6);
+                ctx.rotate(-0.08);
+            } else if (dodgeDir === 1) {
+                ctx.translate(38, 6);
+                ctx.rotate(0.08);
+            }
+
+            if (playerThrowTimer > 0) {
+                playerY -= 2;
+                playerThrowTimer--;
+            }
+
+            // ERBLIN CHARACTER SPRITE
+            // Beanie (Red/Gold signature Erblin colors)
+            drawPixelRect(playerX - 9, playerY - 18, 18, 6, '#b82335');
+            drawPixelRect(playerX - 10, playerY - 12, 20, 3, '#fce138');
+            drawPixelRect(playerX - 2, playerY - 21, 4, 4, '#ffffff'); // Pom-pom
+
+            // Face
+            drawPixelRect(playerX - 8, playerY - 9, 16, 10, '#ffdbac');
+
+            // Eyes
+            drawPixelRect(playerX - 5, playerY - 6, 2, 3, '#101c38');
+            drawPixelRect(playerX + 3, playerY - 6, 2, 3, '#101c38');
+
+            // Scarf
+            drawPixelRect(playerX - 9, playerY + 1, 18, 4, '#b82335');
+
+            // Winter Coat
+            drawPixelRect(playerX - 11, playerY + 5, 22, 15, '#25334e');
+            drawPixelRect(playerX - 2, playerY + 5, 4, 15, '#fce138'); // Zipper
+
+            // Animated Throwing Arms & Mittens
+            if (playerThrowTimer > 5) {
+                // Wind up pose
+                drawPixelRect(playerX - 16, playerY + 6, 6, 6, '#b82335');
+                drawPixelRect(playerX + 10, playerY - 8, 6, 6, '#b82335');
+            } else if (playerThrowTimer > 0) {
+                // Extended throw pose
+                drawPixelRect(playerX - 14, playerY + 6, 6, 6, '#b82335');
+                drawPixelRect(playerX + 8, playerY - 12, 6, 6, '#b82335');
+            } else {
+                // Idle fort pose
+                drawPixelRect(playerX - 15, playerY + 8, 5, 6, '#b82335');
+                drawPixelRect(playerX + 10, playerY + 8, 5, 6, '#b82335');
+            }
+
+            // Foreground Snow Fort Wall
+            drawPixelRect(20, 204, 280, 36, '#ffffff');
+            drawPixelRect(20, 204, 280, 4, '#e1f0f7');
+            drawPixelRect(16, 214, 288, 26, '#d0e3ed');
+
+            // Wall Details
+            drawPixelRect(70, 216, 35, 2, '#a0aab8');
+            drawPixelRect(160, 216, 35, 2, '#a0aab8');
+            drawPixelRect(220, 226, 35, 2, '#909ba8');
+
+            ctx.restore();
+        }
+
+        // Initialize game on load
+        loadGame();
+        openTitleScreen();
+        loop();
+    </script>
+</body>
+</html>
